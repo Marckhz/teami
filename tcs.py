@@ -4,6 +4,7 @@ import random
 import logging
 import coloredlogs
 from rich.console import Console
+from collections import defaultdict
 
 console = Console()
 
@@ -13,41 +14,69 @@ coloredlogs.install(level='INFO', logger=logger)
 class DataCapture():
 
     def __init__(self) -> None:
-        self.collection = {}
-        self.m_list = None
+
+        self.collection = defaultdict(int)
+        [self.collection[i] for i in range(1000)]
         self.data = DataCaptureDTO()
-        self.max_value = 0
+        self.count = 0
 
     def add(self, x: int) -> None:
+        """Adds a Number to the collection and counter
+        
+        Parameters
+        ----------
+        x: int
+            A value to be added
+
+        Raises
+        -------
+            ValueError
+        
+        Returns
+        -------
+        None
+
+        """
         self.data.value = x
-        if self.data.value > self.max_value:
-            self.max_value = self.data.value
-        val = self.collection.get(self.data.value)
-        if not val:
-            self.collection[x] = str(self.data.value)
-        else:
-            self.collection[x] = f'{val}{x}'
+        self.collection[x] += 1
+        self.count += 1
 
     def build_stats(self) -> Stats:
-        if not self.collection:
-            return Stats(collection={}, max_value=0)
-        return Stats(collection=self.collection, max_value=self.max_value)
+        """Algorithm to make the ordenation
 
+        Steps:
+            Take the total times add has been called as that is the number of elements added.
+            Then, Create a new dict with the default values
+            after that, have the less as zero and assign
+            total - the current value
+            update base and total
+            increase base plus the current value of key
+            and decrease the total via the current value of key
+        
+        """
+        d = defaultdict(dict)
+        base = 0
+        total = self.count
+        for key, value in self.collection.items():
+            d[key]['count'] = value
+            d[key]['less'] = base
+            d[key]['greater'] = total -value
+            base += value 
+            total -= value
+        return Stats(collection=d, total=self.count)
 
 if __name__ == "__main__":
     capture = DataCapture()
     logger.info("Generating Seed")
-    for n in range(1000):
-        rn = random.randint(0,1000)
-        capture.add(rn)
-    logger.info("Finish seed")
-    logger.info("Building")
-    stats = capture.build_stats()
-    x = stats.less(11)[:5]
-    y = stats.between(10,100)[:5]
-    z = stats.greater(50)[:5]
+    capture.add(3)
+    capture.add(9)
+    capture.add(3)
+    capture.add(4)
+    capture.add(6)
     
-    console.print(f"[red]Greater [white]{z}")
-    console.print(f"[green]Lower [white]{x}")
-    console.print(f"[yellow]Between [white]{y}")
-  
+    stats = capture.build_stats()
+    console.print(stats.greater(4))
+    console.print(stats.less(4))
+    console.print(stats.between(3,6))
+    console.print(stats.between(11,12))
+    console.print(stats.between(-1, 12))

@@ -1,6 +1,14 @@
 from pydantic import BaseModel, validator
 
 class DataCaptureDTO(BaseModel):
+    """Object to Make the valiidations
+    It wont matter if add floats or string number
+    This object will parse it. Atm we are not throwing.
+
+    Raises
+    ------
+    ValueError if number is lower than zero
+    """
     
     value: int = 0
 
